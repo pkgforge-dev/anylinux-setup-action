@@ -5,7 +5,7 @@ runs:
   using: "composite"
   steps:
     - name: Execute Setup Script
-      shell: bash
+      shell: sh
       run: |
         set -e
 
@@ -15,21 +15,9 @@ runs:
         ANYLINUX_TOOLS_DIR=${ANYLINUX_TOOLS_DIR:-/usr/local/bin}
 
         _get_anylinux_tool() {
-            local _DLCMD
-            if command -v wget 1>/dev/null; then
-                _DLCMD="wget --retry-connrefused --tries=30 -O"
-            elif command -v curl 1>/dev/null; then
-                _DLCMD="curl --retry-connrefused --retry 30 -Lo"
-            else
-                >&2 echo "ERROR: We need wget or curl to download the tools"
-                exit 1
-            fi
             echo "DOWNLOADING '$2' to '$1'"
-            $_DLCMD "$@"
+            wget --retry-connrefused --tries=30 -O "$@"
         }
-
-        echo "Installing downloader dependencies (curl/wget)..."
-        pacman -Syu --noconfirm curl wget
 
         echo "Installing basic packaging dependencies..."
         echo "---------------------------------------------------------------"
@@ -44,10 +32,11 @@ runs:
             libxss \
             pulseaudio \
             pulseaudio-alsa \
+            wget \
             xorg-server-xvfb \
             zsync
 
-        mkdir -p "$ANYLINUX_TOOLS_DIR" ./dist
+        mkdir -p "$ANYLINUX_TOOLS_DIR"
 
         _get_anylinux_tool "$ANYLINUX_TOOLS_DIR"/quick-sharun "$QUICK_SHARUN"
         _get_anylinux_tool "$ANYLINUX_TOOLS_DIR"/get-debloated-pkgs "$DEBLOATED_PACKAGES"
