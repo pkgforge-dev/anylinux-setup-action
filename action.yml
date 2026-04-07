@@ -25,13 +25,22 @@ runs:
         pacman-key --init
         pacman -Syy --noconfirm archlinux-keyring
         pacman -Syu --noconfirm \
+            7zip \
             base-devel \
+            freetype2 \
             git \
+            jq \
             libx11 \
             libxrandr \
             libxss \
+            nspr \
+            nss \
+            nss-mdns \
+            nss-myhostname \
+            patchelf \
             pulseaudio \
             pulseaudio-alsa \
+            unzip \
             wget \
             xorg-server-xvfb \
             zsync
