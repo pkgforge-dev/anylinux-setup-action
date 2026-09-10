@@ -1,4 +1,3 @@
----
 name: "AnyLinux Tools Setup (Arch)"
 description: "Downloads and installs Anylinux packaging tools and dependencies"
 runs:
@@ -7,53 +6,4 @@ runs:
     - name: Execute Setup Script
       shell: sh
       run: |
-        set -e
-
-        QUICK_SHARUN=${QUICK_SHARUN:-https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/quick-sharun.sh}
-        DEBLOATED_PACKAGES=${DEBLOATED_PACKAGES:-https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/get-debloated-pkgs.sh}
-        MAKE_AUR_PACKAGE=${MAKE_AUR_PACKAGE:-https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/make-aur-package.sh}
-        ANYLINUX_TOOLS_DIR=${ANYLINUX_TOOLS_DIR:-/usr/local/bin}
-
-        _get_anylinux_tool() {
-            echo "DOWNLOADING '$2' to '$1'"
-            wget --retry-connrefused --tries=30 -O "$@"
-        }
-
-        echo "Installing basic packaging dependencies..."
-        echo "---------------------------------------------------------------"
-
-        pacman-key --init
-        pacman -Syy --noconfirm archlinux-keyring
-        pacman -Syu --noconfirm \
-            7zip \
-            base-devel \
-            freetype2 \
-            git \
-            jq \
-            libx11 \
-            libxrandr \
-            libxss \
-            nspr \
-            nss \
-            nss-mdns \
-            nss-myhostname \
-            patchelf \
-            pulseaudio \
-            pulseaudio-alsa \
-            unzip \
-            wget \
-            xorg-server-xvfb \
-            zsync
-
-        mkdir -p "$ANYLINUX_TOOLS_DIR"
-
-        _get_anylinux_tool "$ANYLINUX_TOOLS_DIR"/quick-sharun "$QUICK_SHARUN"
-        _get_anylinux_tool "$ANYLINUX_TOOLS_DIR"/get-debloated-pkgs "$DEBLOATED_PACKAGES"
-        _get_anylinux_tool "$ANYLINUX_TOOLS_DIR"/make-aur-package "$MAKE_AUR_PACKAGE"
-
-        chmod +x \
-            "$ANYLINUX_TOOLS_DIR"/quick-sharun \
-            "$ANYLINUX_TOOLS_DIR"/get-debloated-pkgs \
-            "$ANYLINUX_TOOLS_DIR"/make-aur-package
-
-        echo "CONTAINER IS READY! Tools installed in $ANYLINUX_TOOLS_DIR."
+        sh "${GITHUB_ACTION_PATH}/setup.sh"
