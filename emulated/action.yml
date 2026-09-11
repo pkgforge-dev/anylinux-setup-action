@@ -1,0 +1,49 @@
+---
+name: "AnyLinux Tools Setup (Arch, emulated)"
+description: "Builds an AppImage in a foreign arch Arch container under qemu user emulation"
+inputs:
+  platform:
+    description: "docker platform to build for (linux/riscv64, linux/loong64, linux/ppc64le or linux/ppc64)"
+    required: true
+  container:
+    description: "container image to run the build in"
+    default: "ghcr.io/pkgforge-dev/archlinux:latest"
+runs:
+  using: "composite"
+  steps:
+    - name: Register QEMU binfmt handlers
+      shell: sh
+      run: |
+        # docker/setup-qemu-action is not used, it ships no ppc64 (big endian)
+        # handler. The stock qemu entries require zero ELF pad bytes and
+        # uruntime stamps AI there, so AppImages would fail to exec. These
+        # entries ignore osabi, pad and e_type.
+        set -eu
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends qemu-user-static
+        [ -e /proc/sys/fs/binfmt_misc/register ] ||
+          sudo mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
+        register() {
+          sudo sh -c "echo -1 > /proc/sys/fs/binfmt_misc/qemu-$1" 2>/dev/null || true
+          printf ':qemu-%s:M::%s:%s:/usr/libexec/qemu-binfmt/%s-binfmt-P:OPF\n' "$1" "$2" "$3" "$1" |
+            sudo tee /proc/sys/fs/binfmt_misc/register
+        }
+        #                                     magic (e_machine last)                                 mask
+        register riscv64     '\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf3\x00' '\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff'
+        register loongarch64 '\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x01' '\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff'
+        register ppc64       '\x7f\x45\x4c\x46\x02\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x15' '\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff'
+        register ppc64le     '\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x15\x00' '\xff\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff'
+    - name: Build AppImage
+      shell: sh
+      env:
+        PLATFORM: ${{ inputs.platform }}
+        CONTAINER: ${{ inputs.container }}
+      run: |
+        set -eu
+        # setup.sh sits at the root of this action's own repository, which the
+        # runner has already checked out one level above GITHUB_ACTION_PATH
+        SETUP_DIR=$(dirname "$GITHUB_ACTION_PATH")
+        # sourcing keeps presets like VERSION alive between the two scripts
+        docker run --rm --platform "$PLATFORM" -e GITHUB_REPOSITORY -e DEVEL_RELEASE \
+          -v "$GITHUB_WORKSPACE":/repo -v "$SETUP_DIR":/setup -w /repo "$CONTAINER" \
+          /bin/sh -euc 'sh /setup/setup.sh && . ./get-dependencies.sh && cd /repo && . ./make-appimage.sh'
