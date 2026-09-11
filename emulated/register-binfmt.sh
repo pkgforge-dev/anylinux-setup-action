@@ -1,14 +1,16 @@
 #!/bin/sh
+set -eu
 # registers the qemu binfmt handlers the foreign arch containers need
 # docker/setup-qemu-action is not used, it ships no ppc64 (big endian) handler
 # the stock qemu entries require zero ELF pad bytes, uruntime stamps AI there
 # so AppImages would fail to exec, these entries ignore osabi, pad and e_type
-
-set -eu
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends qemu-user-static
-[ -e /proc/sys/fs/binfmt_misc/register ] ||
+
+if [ ! -e /proc/sys/fs/binfmt_misc/register ]; then
 	sudo mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
+fi
+
 register() {
 	sudo sh -c "echo -1 > /proc/sys/fs/binfmt_misc/qemu-$1" 2>/dev/null || true
 	printf ':qemu-%s:M::%s:%s:/usr/libexec/qemu-binfmt/%s-binfmt-P:OPF\n' "$1" "$2" "$3" "$1" |
