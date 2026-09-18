@@ -3,7 +3,7 @@ name: "AnyLinux Tools Setup (Arch, emulated)"
 description: "Builds an AppImage in a foreign arch Arch container under qemu user emulation"
 inputs:
   platform:
-    description: "docker platform to build for (linux/riscv64, linux/loong64, linux/ppc64le or linux/ppc64)"
+    description: "docker platform to build for (linux/arm64, linux/riscv64, linux/loong64, linux/ppc64le or linux/ppc64)"
     required: true
   container:
     description: "container image to run the build in"

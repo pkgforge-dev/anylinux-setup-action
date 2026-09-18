@@ -19,7 +19,7 @@ inside a `docker run`:
 - name: Preparing Container (emulated)
   uses: pkgforge-dev/anylinux-setup-action/emulated@main
   with:
-    # one of: linux/riscv64, linux/loong64, linux/ppc64le, linux/ppc64
+    # one of: linux/arm64, linux/riscv64, linux/loong64, linux/ppc64le, linux/ppc64
     platform: linux/riscv64
 ```
 
@@ -35,6 +35,8 @@ strategy:
       - { name: Build AppImage, arch: loongarch64, platform: linux/loong64 }
       - { name: Build AppImage, arch: ppc64le, platform: linux/ppc64le }
       - { name: Build AppImage, arch: ppc64, platform: linux/ppc64 } # BE
+      # usually built natively on ubuntu-24.04-arm, emulation is for x86_64 runners
+      - { name: Build AppImage, arch: aarch64, platform: linux/arm64 }
 steps:
   - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
   - name: Build AppImage (emulated)
